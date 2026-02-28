@@ -2,6 +2,39 @@
 
 A practitioner's guide to building agentic systems with Claude models. Covers orchestration architectures, state management, tool use, safety, and delegation prompt design — grounded in model-specific benchmark data and documented behaviors.
 
+## Table of Contents
+
+- [1. Agent Orchestration Patterns](#1-agent-orchestration-patterns)
+  - [Single-Agent vs. Multi-Agent](#single-agent-vs-multi-agent)
+  - [When to Use Sub-Agents vs. Sequential Tool Calls](#when-to-use-sub-agents-vs-sequential-tool-calls)
+  - [Orchestrator-Worker Patterns](#orchestrator-worker-patterns)
+  - [Model Selection for Agent Roles](#model-selection-for-agent-roles)
+  - [Research and Information Gathering](#research-and-information-gathering)
+  - [Self-Correction Chaining](#self-correction-chaining)
+- [2. State Management Across Context Windows](#2-state-management-across-context-windows)
+  - [Context Window Compaction](#context-window-compaction)
+  - [Git-Based State Persistence](#git-based-state-persistence)
+  - [Structured vs. Unstructured State](#structured-vs-unstructured-state)
+  - [Fresh Context Window Opening Prompts](#fresh-context-window-opening-prompts)
+  - [First Window vs. Subsequent Windows](#first-window-vs-subsequent-windows)
+  - [The Cold Start Problem](#the-cold-start-problem)
+  - [Verification Tools](#verification-tools)
+- [3. Tool Use Patterns](#3-tool-use-patterns)
+  - [Parallel Tool Calling](#parallel-tool-calling)
+  - [Tool Description Best Practices](#tool-description-best-practices)
+  - [Reducing Speculative Tool Calls](#reducing-speculative-tool-calls)
+  - [Managing File Creation in Agentic Coding](#managing-file-creation-in-agentic-coding)
+  - [MCP Server Integration](#mcp-server-integration)
+- [4. Autonomy and Safety in Agentic Contexts](#4-autonomy-and-safety-in-agentic-contexts)
+  - [The Confirmation Spectrum](#the-confirmation-spectrum)
+  - [Model-Specific Autonomy Risks](#model-specific-autonomy-risks)
+  - [Prompt Injection Defense](#prompt-injection-defense)
+  - [Sandboxing Patterns for Untrusted Input](#sandboxing-patterns-for-untrusted-input)
+- [5. Delegation Prompt Design](#5-delegation-prompt-design)
+  - [Writing Effective Sub-Agent Prompts](#writing-effective-sub-agent-prompts)
+  - [What Context to Include vs. Omit](#what-context-to-include-vs-omit)
+  - [Output Format for Downstream Consumption](#output-format-for-downstream-consumption)
+  - [Error Handling and Escalation](#error-handling-and-escalation)
 
 <section_guide>
 Sections 1-2: Architecture decisions — single vs. multi-agent, orchestrator-worker patterns, model selection for roles, research patterns, self-correction chaining, state management across context windows, first-window strategies, verification tools.

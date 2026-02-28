@@ -1,6 +1,6 @@
 ---
 name: prompt-engineering-models
-description: Help users craft effective prompts for Claude models (Opus 4.6, Sonnet 4.6, Haiku 4.5) across API and agent harness contexts. Trigger when the user asks to write a prompt, improve a prompt, debug a prompt, choose a Claude model, configure thinking or effort, migrate from an older model, set up CLAUDE.md, write task instructions for Claude Code or Cowork, decompose a task for an agent, write a repeatable process prompt, or mentions prompt engineering, model selection, or agent orchestration. Trigger generously.
+description: Help users craft effective prompts for Claude models (Opus 4.6, Sonnet 4.6, Haiku 4.5) across API and agent harness contexts. Trigger when the user asks to write, improve, or debug a prompt, choose a Claude model, configure thinking or effort, migrate from an older model, set up CLAUDE.md, write task instructions for Claude Code or Cowork, decompose a task for an agent, or write a repeatable process prompt. Also trigger for natural phrasing like "getting bad results from Claude," "Claude keeps doing X wrong," "how do I get Claude to...," "why does Claude keep...," or "tune Claude's behavior" — any sign the user wants to improve how Claude responds. Trigger generously.
 ---
 
 # Claude Prompt Engineering Skill
@@ -9,34 +9,13 @@ Help users and agents craft effective prompts for Claude models (Opus 4.6, Sonne
 
 ## Trigger & Scope
 
-Activate this skill when the user:
-
-**API and system prompt context:**
-- Asks for help writing, improving, or debugging a Claude prompt
-- Wants to choose the right Claude model for a task
-- Needs to configure API parameters (thinking, effort, tokens) for optimal results
-- Is migrating prompts from an older Claude model to a 4.6 model
-- Wants a prompt template for a specific use case (classification, extraction, agentic coding, etc.)
-- Is designing an agentic system with Claude (orchestration, delegation, state management)
-
-**Agent harness context (Claude Code, Cowork, Chat):**
-- Needs help writing effective task instructions for a conversational Claude agent
-- Wants to set up or improve a CLAUDE.md file for their project
-- Is trying to orient the agent to their codebase or repo structure
-- Needs guidance on decomposing a large task into agent-friendly steps
-- Wants to write a durable, repeatable process prompt
-- Is getting poor results from Claude Code/Cowork and wants to improve their approach
-- Asks about how model behavioral differences affect their prompt-writing strategy
-
-**General:**
-- Asks about Claude model capabilities, limitations, or behavioral quirks
-- Wants prompting best practices for any context
-
-This skill covers the current Claude model family: Opus 4.6, Sonnet 4.6, and Haiku 4.5. It does not cover older models except in the context of migration.
+Identify the user's context to determine which guidance applies. This skill covers Opus 4.6, Sonnet 4.6, and Haiku 4.5 across API, agent harness, and agentic system-building contexts. It does not cover older models except in the context of migration.
 
 ## Workflow
 
 Follow these steps when helping with prompt engineering. Each step includes a skip condition — check it before proceeding.
+
+These steps are a framework, not a rigid procedure. Adapt to the user's specific situation — skip steps that don't apply, combine steps when natural, and reason from the Key Principles when encountering scenarios these instructions don't cover explicitly.
 
 ### Step 0: Identify the Prompting Context
 
@@ -60,6 +39,8 @@ Determine which context the user is working in. This changes which advice and re
 </routing>
 
 If the user is in an **agent harness context**, prioritize guidance from `references/agent-harness-prompting.md`. The API-focused steps below (system prompt design, API parameter configuration) still apply when the user is building their own system or using the API directly.
+
+This skill provides guidance and drafts. Do not modify the user's files (system prompts, CLAUDE.md, code) without explicit permission — present recommendations and let the user decide what to apply.
 
 ### Step 1: Understand the Goal
 
@@ -180,6 +161,8 @@ These are the most important prompting principles, distilled from system card an
 
 **9. Decompose deliberately.** The user is the orchestrator. Separate discovery from implementation with a review gate for ambiguous tasks. Give the full task at once only when the agent needs holistic context. For large projects, use plan mode or explicitly ask the agent to propose an approach before coding.
 
+The anti-patterns tables below catalog specific instances of these principles. Consult them as a quick reference, but reason from the principles above when encountering novel situations.
+
 ## Reference Files
 
 | File | Consult when... |
@@ -195,6 +178,8 @@ These are the most important prompting principles, distilled from system card an
 | `references/model-profiles/haiku-4-5.md` | Deciding whether Haiku is sufficient; debugging Haiku-specific behavior (test-hardcoding, safeguard dependency) |
 
 ## Anti-Patterns
+
+These are concrete applications of the Key Principles above — not an exhaustive rulebook. Use them as quick-reference for common mistakes.
 
 <anti_patterns category="prompt">
   <pattern mistake="Use emphatic caps: YOU MUST ALWAYS..." correct="Use normal language: Use this tool when..." reason="4.6 models overtrigger on intense instructions" />

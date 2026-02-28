@@ -44,7 +44,7 @@ Sonnet 4.6 is Anthropic's best balance of speed and intelligence. The system car
 
 ## 3. Thinking and Effort Behavior
 
-**Adaptive thinking** works the same as Opus 4.6: the model self-calibrates reasoning depth depending on task difficulty, with developers able to set effort levels (low/medium/high/max).
+**Adaptive thinking** works the same as Opus 4.6: the model self-calibrates reasoning depth depending on task difficulty, with developers able to set effort levels (low/medium/high).
 
 **Extended thinking consistently improves performance.** Approximately 7 percentage point improvement on GMMLU when extended thinking is enabled. Default testing used adaptive thinking with max effort across most evaluations.
 
@@ -54,7 +54,7 @@ Sonnet 4.6 is Anthropic's best balance of speed and intelligence. The system car
 
 **High effort increases monitorability.** At high effort settings, adaptive thinking causes the model to reason more extensively, which "almost always reveals" its reasoning process — useful for oversight but potentially a concern if you want compact outputs.
 
-**For prompt engineers:** Use max effort for complex reasoning tasks where quality matters most. For routine tasks, medium effort saves tokens with modest quality trade-offs. Unlike Opus, Sonnet 4.6's extended thinking *reduces* prompt injection vulnerability rather than increasing it.
+**For prompt engineers:** Use high effort for complex reasoning tasks where quality matters most. For routine tasks, medium effort saves tokens with modest quality trade-offs. Unlike Opus, Sonnet 4.6's extended thinking *reduces* prompt injection vulnerability rather than increasing it.
 
 ## 4. Safety and Refusal Behavior
 

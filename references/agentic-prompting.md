@@ -2,17 +2,14 @@
 
 A practitioner's guide to building agentic systems with Claude models. Covers orchestration architectures, state management, tool use, safety, and delegation prompt design — grounded in model-specific benchmark data and documented behaviors.
 
----
 
-## Table of Contents
+<section_guide>
+Sections 1-2: Architecture decisions — single vs. multi-agent, orchestrator-worker patterns, model selection for roles, research patterns, self-correction chaining, state management across context windows, first-window strategies, verification tools.
+Section 3: Tool use — parallel calling, tool descriptions, reducing speculative calls, file creation management, MCP integration.
+Section 4: Safety — confirmation tiers, model-specific autonomy risks, prompt injection defense, sandboxing untrusted input.
+Section 5: Delegation — writing sub-agent prompts, context scoping, output formats, error handling and escalation.
+</section_guide>
 
-1. [Agent Orchestration Patterns](#1-agent-orchestration-patterns)
-2. [State Management Across Context Windows](#2-state-management-across-context-windows)
-3. [Tool Use Patterns](#3-tool-use-patterns)
-4. [Autonomy and Safety in Agentic Contexts](#4-autonomy-and-safety-in-agentic-contexts)
-5. [Delegation Prompt Design](#5-delegation-prompt-design)
-
----
 
 ## 1. Agent Orchestration Patterns
 
@@ -67,7 +64,26 @@ Key benchmark data informing role assignment:
 - **Opus 4.6 for deep investigation:** 65.4% Terminal-Bench (6pp above Sonnet), best on SWE-bench-hard. Use when the task requires extensive context exploration.
 - **Haiku 4.5 for parallel workers:** Designed for multi-instance parallelism at 1/5 Opus output cost.
 
----
+### Research and Information Gathering
+
+Claude 4.6 models demonstrate strong agentic search capabilities — finding and synthesizing information across multiple sources with minimal guidance. For complex research tasks, a structured hypothesis-tracking approach significantly improves result quality:
+
+```
+Search for this information in a structured way. As you gather data, develop
+several competing hypotheses. Track your confidence levels in your progress
+notes to improve calibration. Regularly self-critique your approach and plan.
+Update a hypothesis tree or research notes file to persist information and
+provide transparency. Break down this complex research task systematically.
+```
+
+Key elements: define clear success criteria for the research question, encourage source cross-verification, and have the agent maintain a visible working document (not just internal reasoning) so the orchestrator or user can monitor progress.
+
+### Self-Correction Chaining
+
+With adaptive thinking and subagent orchestration, Claude handles most multi-step reasoning internally. Explicit prompt chaining — breaking a task into sequential API calls — is still useful when you need to inspect intermediate outputs or enforce a pipeline structure.
+
+The most common chaining pattern is **generate → review → refine**: produce a draft, have Claude review it against criteria, then refine based on the review. Each step is a separate API call so you can log, evaluate, or branch at any point. This is particularly effective for code generation, document writing, and any task with well-defined quality criteria.
+
 
 ## 2. State Management Across Context Windows
 
@@ -83,6 +99,17 @@ allowing you to continue working indefinitely. Do not stop tasks early due to
 token budget concerns. As you approach the limit, save progress and state to
 memory before the context refreshes.
 ```
+
+**Encouraging complete context usage.** For long autonomous tasks, explicitly tell the agent to use its full budget rather than stopping early:
+
+```
+This is a very long task, so it may be beneficial to plan out your work clearly.
+It's encouraged to spend your entire output context working on the task — just
+make sure you don't run out of context with significant uncommitted work.
+Continue working systematically until you have completed this task.
+```
+
+The memory tool (when available) pairs naturally with context awareness — the agent can save state to persistent memory as the context limit approaches, enabling seamless transitions between context windows.
 
 ### Git-Based State Persistence
 
@@ -111,6 +138,16 @@ You are resuming work on [task]. Before continuing:
 Then continue from where you left off.
 ```
 
+### First Window vs. Subsequent Windows
+
+Use a different strategy for the first context window than for later ones:
+
+**First window:** Set up infrastructure. Have the agent write tests in a structured format (e.g., `tests.json`), create setup scripts (`init.sh`) to start servers, run test suites, and linters, and establish the state tracking pattern. Remind the agent to protect this infrastructure: "It is unacceptable to remove or edit tests, as this could lead to missing or buggy functionality."
+
+**Subsequent windows:** Start with discovery and verification rather than diving into new work. The agent should review state files, run the test suite, and confirm current status before implementing new features.
+
+**Fresh start vs. compaction:** Consider starting with a brand new context window rather than compacting. Claude 4.6 models are extremely effective at discovering state from the local filesystem — in some cases, a clean slate with filesystem discovery outperforms a compacted context with summarization artifacts.
+
 ### The Cold Start Problem
 
 When an agent resumes without explicit state files, it must discover state from the environment. Claude 4.6 models are effective at this — they can reconstruct context from filesystem contents, git history, and project structure. To support this:
@@ -119,7 +156,17 @@ When an agent resumes without explicit state files, it must discover state from 
 - For the first context window, have the agent set up infrastructure: write tests, create an `init.sh` script, establish the state tracking pattern
 - For subsequent windows, start with discovery rather than compaction: "Review the filesystem and git logs to understand current state"
 
----
+### Verification Tools
+
+As autonomous task length grows, Claude needs to verify correctness without continuous human feedback. Provide tools for self-checking:
+
+- **Playwright MCP server** or computer use capabilities for testing UIs end-to-end
+- **Test suites** that the agent can run after each change
+- **Linters and type checkers** for catching regressions immediately
+- **Browser preview tools** for visual verification of frontend changes
+
+The pattern is: make changes, run verification, iterate if verification fails — all without requiring a human in the loop.
+
 
 ## 3. Tool Use Patterns
 
@@ -162,11 +209,23 @@ Opus 4.6 at higher effort levels makes speculative tool calls — reading files 
 2. **Replace blanket defaults with targeted guidance.** Instead of "If in doubt, use search," use "Use search when it would enhance your understanding of the problem."
 3. **Remove anti-laziness prompts.** Instructions like "ALWAYS investigate thoroughly" that were needed for older models cause overtriggering on 4.6.
 
+### Managing File Creation in Agentic Coding
+
+Claude's latest models may create new files for testing and iteration — using Python scripts as temporary scratchpads, writing helper files, or creating test harnesses. This can improve outcomes for complex coding tasks, but produces clutter if left unchecked.
+
+If you want to minimize net-new file creation:
+
+```
+If you create any temporary new files, scripts, or helper files for iteration,
+clean up these files by removing them at the end of the task.
+```
+
+If temporary files are acceptable (or desirable), let the agent use them freely but commit only the final artifacts.
+
 ### MCP Server Integration
 
 When integrating tools via MCP (Model Context Protocol), the same principles apply: describe tools concisely in definitions, put strategic guidance in the system prompt, and control parallelism via effort and explicit prompting. MCP tools are indistinguishable from native tools from the model's perspective — all tool-use prompting techniques apply equally.
 
----
 
 ## 4. Autonomy and Safety in Agentic Contexts
 
@@ -229,9 +288,10 @@ When processing user-provided or web-sourced content that may contain injection 
 3. **Strip tool access on untrusted-input agents.** If the worker only needs to analyze text, don't give it file-write or bash tools.
 4. **Validate worker outputs before the orchestrator acts on them.** Check for unexpected tool calls, credential exfiltration attempts, or instruction injection in the output.
 
----
 
 ## 5. Delegation Prompt Design
+
+> For delegation within agent harnesses (Claude Code subagents), see [agent-harness-prompting.md](agent-harness-prompting.md) Section 7. This section covers API-level delegation where you control the orchestrator's system prompt and tool definitions.
 
 ### Writing Effective Sub-Agent Prompts
 

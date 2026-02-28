@@ -2,7 +2,6 @@
 
 A catalog of actionable techniques for writing effective Claude prompts, organized by category. Each technique includes concrete guidance and before/after examples where applicable.
 
----
 
 ## 1. System Prompts
 
@@ -27,6 +26,13 @@ ellipses since the TTS engine cannot pronounce them.
 
 **Dial back intensity for 4.6 models.** Where you might have written `CRITICAL: You MUST use this tool when...` for older models, use conversational language: `Use this tool when...`. The 4.6 models follow system prompts faithfully enough that emphatic language causes overcorrection.
 
+**Model self-knowledge.** If your application needs Claude to identify itself correctly, or to specify model strings when acting as an agent that calls other LLMs:
+
+```
+The assistant is Claude, created by Anthropic. The current model is Claude Sonnet 4.6.
+When an LLM is needed, default to Claude Sonnet 4.6. The exact model string is claude-sonnet-4-6.
+```
+
 **Default-to-action vs. conservative mode.** Two ready-made system prompt blocks for controlling how proactively Claude acts:
 
 ```xml
@@ -45,7 +51,6 @@ rather than taking action.
 </do_not_act_before_instructions>
 ```
 
----
 
 ## 2. Structured Input with XML Tags
 
@@ -93,7 +98,6 @@ Do not use markdown in your response.
 Write your analysis in <prose_paragraphs> tags using flowing sentences.
 ```
 
----
 
 ## 3. Few-Shot Examples
 
@@ -126,7 +130,6 @@ Examples are the most reliable way to steer output format, tone, and structure. 
 </example>
 ```
 
----
 
 ## 4. Chain-of-Thought and Self-Verification
 
@@ -156,9 +159,27 @@ Think through this step by step in <thinking> tags, then provide your
 final answer in <answer> tags.
 ```
 
----
 
 ## 5. Output Format Control
+
+**4.6 models are more concise by default.** Claude's latest models have a more direct, conversational style — they may skip verbal summaries after tool calls and jump directly to the next action. If you need visibility into intermediate reasoning:
+
+```
+After completing a task that involves tool use, provide a quick summary
+of the work you've done.
+```
+
+**Request "above and beyond" explicitly.** 4.6 models respond well to modifiers that raise the quality bar. Vague prompts get baseline output; explicit ambition framing gets significantly richer results:
+
+```
+# Baseline output
+Create an analytics dashboard.
+
+# Richer output
+Create an analytics dashboard. Include as many relevant features and
+interactions as possible. Go beyond the basics to create a fully-featured
+implementation.
+```
 
 **Tell Claude what to do, not what not to do.** Positive instructions produce more reliable formatting:
 
@@ -180,7 +201,35 @@ Format all math in plain text. Do not use LaTeX, MathJax, or notation like
 \( \), $, or \frac{}{}. Use / for division, * for multiplication, ^ for exponents.
 ```
 
-**Structured outputs for machine consumption.** For JSON, YAML, or schema-constrained output, use the Structured Outputs API feature rather than prompting. It's more reliable and eliminates parsing failures.
+**Suppressing markdown in long-form output.** When you need prose rather than lists, a targeted system prompt block is more reliable than a short instruction:
+
+```xml
+<avoid_excessive_markdown_and_bullet_points>
+When writing reports, documents, technical explanations, analyses, or any
+long-form content, write in clear, flowing prose using complete paragraphs
+and sentences. Use standard paragraph breaks for organization and reserve
+markdown primarily for `inline code`, code blocks, and simple headings.
+Avoid using **bold** and *italics*.
+
+DO NOT use ordered lists (1. ...) or unordered lists (*) unless: a) you're
+presenting truly discrete items where a list format is the best option, or
+b) the user explicitly requests a list or ranking.
+
+Instead of listing items with bullets or numbers, incorporate them naturally
+into sentences. Your goal is readable, flowing text that guides the reader
+naturally through ideas rather than fragmenting information into isolated points.
+</avoid_excessive_markdown_and_bullet_points>
+```
+
+**Structured outputs for machine consumption.** When you need Claude to produce JSON, YAML, or schema-constrained output, prefer the Structured Outputs API feature over prompt-based formatting. Structured Outputs enforces a JSON schema at the API level, guaranteeing valid output and eliminating parsing failures. Use it for:
+
+- Classification with fixed labels (define an enum in the schema)
+- Data extraction with known fields (define the object shape)
+- Any pipeline where downstream code parses Claude's output
+
+For classification specifically, you can also use a tool definition with an enum field containing valid labels — this is functionally equivalent and integrates naturally with tool-use workflows.
+
+When Structured Outputs is overkill (freeform analysis, conversational responses, or exploratory output), prompt-based formatting with XML tags is sufficient.
 
 **Eliminating preambles without prefill.** Prefilled responses are deprecated on 4.6 models. Instead:
 
@@ -189,7 +238,6 @@ Respond directly without preamble. Do not start with phrases like
 "Here is...", "Based on...", "Sure!", etc.
 ```
 
----
 
 ## 6. Tool Use and Agentic Prompting
 
@@ -247,7 +295,6 @@ surrounding code, or build in flexibility that wasn't asked for. The right
 amount of complexity is the minimum needed for the current task.
 ```
 
----
 
 ## 7. Long-Context and Multi-Window Techniques
 
@@ -270,7 +317,6 @@ Review progress.txt, tests.json, and the git logs. Run the integration
 test suite before implementing new features.
 ```
 
----
 
 ## 8. Claude 4.6-Specific Techniques
 
@@ -308,3 +354,45 @@ Extended thinking adds latency and should only be used when it will
 meaningfully improve answer quality — typically for problems requiring
 multi-step reasoning. When in doubt, respond directly.
 ```
+
+
+## 9. Frontend Design
+
+Opus 4.5/4.6 excel at building complex web applications with strong frontend design, but without guidance, models converge toward generic patterns — what users call the "AI slop" aesthetic. A system prompt block that steers toward distinctive, creative output:
+
+```xml
+<frontend_aesthetics>
+You tend to converge toward generic, "on distribution" outputs. In frontend
+design, this creates what users call the "AI slop" aesthetic. Avoid this:
+make creative, distinctive frontends that surprise and delight.
+
+Focus on:
+- Typography: Choose fonts that are beautiful, unique, and interesting.
+  Avoid generic fonts like Arial and Inter; opt for distinctive choices
+  that elevate the aesthetic.
+- Color & Theme: Commit to a cohesive aesthetic. Use CSS variables for
+  consistency. Dominant colors with sharp accents outperform timid,
+  evenly-distributed palettes. Draw from IDE themes and cultural
+  aesthetics for inspiration.
+- Motion: Use animations for effects and micro-interactions. Prioritize
+  CSS-only solutions for HTML. Use Motion library for React when
+  available. Focus on high-impact moments: one
+  well-orchestrated page load with staggered reveals (animation-delay)
+  creates more delight than scattered micro-interactions.
+- Backgrounds: Create atmosphere and depth rather than defaulting to solid
+  colors. Layer CSS gradients, use geometric patterns, or add contextual
+  effects that match the overall aesthetic.
+
+Avoid generic AI-generated aesthetics:
+- Overused font families (Inter, Roboto, Arial, system fonts)
+- Clichéd color schemes (particularly purple gradients on white backgrounds)
+- Predictable layouts and component patterns
+- Cookie-cutter design that lacks context-specific character
+
+Interpret creatively and make unexpected choices that feel genuinely designed
+for the context. Vary between light and dark themes, different fonts,
+different aesthetics across generations.
+</frontend_aesthetics>
+```
+
+**Document creation** follows the same principle: Claude produces polished presentations, animations, and visual documents on the first try, but you get better results by requesting specific design elements and interactions explicitly rather than relying on defaults.

@@ -28,7 +28,7 @@ A structured comparison of Claude Opus 4.6, Sonnet 4.6, and Haiku 4.5 organized 
 |---------|----------|------------|-----------|
 | Extended thinking | Yes | Yes | Yes |
 | Adaptive thinking | Yes | Yes | **No** |
-| Effort levels | Low / Med / High / Max | Low / Med / High / Max | N/A (binary toggle) |
+| Effort levels | Low / Med / High / Max | Low / Med / High | N/A (binary toggle) |
 | Thinking token efficiency (GMMLU) | 191 median tokens/question | 246 median tokens/question | Not reported |
 | Extended thinking effect on safety | Reduces over-refusal (0.80% → 0.56%) | Reduces over-refusal (0.50% → 0.32%) | Reduces over-refusal (0.02% → 0.01%) |
 

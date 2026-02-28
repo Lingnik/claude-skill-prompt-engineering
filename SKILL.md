@@ -1,33 +1,65 @@
 ---
 name: prompt-engineering-models
-description: Help users and agents craft effective prompts for Claude models (Opus 4.6, Sonnet 4.6, Haiku 4.5). Use this skill when reviewing, writing, debugging, or optimizing prompts for any Claude model, choosing between Claude models for a task, configuring API parameters like thinking modes and effort levels, migrating prompts from older Claude models, or building agentic workflows that use Claude. Also use when the user asks about Claude model capabilities, behavioral quirks, or prompting best practices. Trigger generously — any mention of prompts, prompt engineering, model selection, or agent orchestration for Claude should activate this skill.
+description: Help users craft effective prompts for Claude models (Opus 4.6, Sonnet 4.6, Haiku 4.5) across API and agent harness contexts. Trigger when the user asks to write a prompt, improve a prompt, debug a prompt, choose a Claude model, configure thinking or effort, migrate from an older model, set up CLAUDE.md, write task instructions for Claude Code or Cowork, decompose a task for an agent, write a repeatable process prompt, or mentions prompt engineering, model selection, or agent orchestration. Trigger generously.
 ---
 
 # Claude Prompt Engineering Skill
 
-Help users and agents craft effective prompts for Claude models (Opus 4.6, Sonnet 4.6, Haiku 4.5). This skill provides model-specific guidance grounded in system card analysis and official documentation.
-
----
+Help users and agents craft effective prompts for Claude models (Opus 4.6, Sonnet 4.6, Haiku 4.5) across all deployment contexts — from direct API usage to conversational agent harnesses like Claude Code, Cowork, and Chat. Guidance is grounded in system card analysis and official documentation.
 
 ## Trigger & Scope
 
 Activate this skill when the user:
 
+**API and system prompt context:**
 - Asks for help writing, improving, or debugging a Claude prompt
 - Wants to choose the right Claude model for a task
 - Needs to configure API parameters (thinking, effort, tokens) for optimal results
 - Is migrating prompts from an older Claude model to a 4.6 model
-- Asks about Claude model capabilities, limitations, or behavioral quirks
 - Wants a prompt template for a specific use case (classification, extraction, agentic coding, etc.)
 - Is designing an agentic system with Claude (orchestration, delegation, state management)
 
-This skill covers the current Claude model family: Opus 4.6, Sonnet 4.6, and Haiku 4.5. It does not cover older models except in the context of migration.
+**Agent harness context (Claude Code, Cowork, Chat):**
+- Needs help writing effective task instructions for a conversational Claude agent
+- Wants to set up or improve a CLAUDE.md file for their project
+- Is trying to orient the agent to their codebase or repo structure
+- Needs guidance on decomposing a large task into agent-friendly steps
+- Wants to write a durable, repeatable process prompt
+- Is getting poor results from Claude Code/Cowork and wants to improve their approach
+- Asks about how model behavioral differences affect their prompt-writing strategy
 
----
+**General:**
+- Asks about Claude model capabilities, limitations, or behavioral quirks
+- Wants prompting best practices for any context
+
+This skill covers the current Claude model family: Opus 4.6, Sonnet 4.6, and Haiku 4.5. It does not cover older models except in the context of migration.
 
 ## Workflow
 
-Follow these steps when helping with prompt engineering. Skip steps that aren't relevant to the user's request.
+Follow these steps when helping with prompt engineering. Each step includes a skip condition — check it before proceeding.
+
+### Step 0: Identify the Prompting Context
+
+Determine which context the user is working in. This changes which advice and reference files apply. Heuristic: if the user mentions Claude Code, Cowork, or Chat, or is writing a user-turn message rather than a system prompt, they are in `agent_harness` context. If they are writing system prompts and tool definitions, they are in `api` context. If they are designing an agent product for end users, they are in `building_harness` context.
+
+<routing>
+  <context name="api">
+    User controls: system prompt, tools, model, thinking config, all parameters.
+    Primary guidance: this file + all reference files.
+  </context>
+  <context name="agent_harness">
+    User controls: user-turn messages, CLAUDE.md, plan mode, session model choice.
+    Claude Code also: system prompt customization, tool restrictions, effort/thinking control, compaction.
+    Cowork/Chat: base system prompt, tool definitions, and thinking config are fixed.
+    Primary guidance: references/agent-harness-prompting.md
+  </context>
+  <context name="building_harness">
+    User controls: system prompt, tools, model — designing for end users.
+    Primary guidance: references/agentic-prompting.md
+  </context>
+</routing>
+
+If the user is in an **agent harness context**, prioritize guidance from `references/agent-harness-prompting.md`. The API-focused steps below (system prompt design, API parameter configuration) still apply when the user is building their own system or using the API directly.
 
 ### Step 1: Understand the Goal
 
@@ -37,9 +69,11 @@ Before writing or modifying a prompt, clarify:
 - **What is the input?** Short text, long documents, images, code, structured data?
 - **What is the expected output?** Free text, JSON, code, tool calls, decisions?
 - **What are the constraints?** Latency, cost, accuracy requirements, safety sensitivity?
-- **What's the deployment context?** Single API call, multi-turn conversation, agent loop, batch processing?
+- **What's the deployment context?** Single API call, multi-turn conversation, agent loop, batch processing, or agent harness (Claude Code/Cowork/Chat)?
 
 ### Step 2: Select the Model
+
+Skip if: the user already specified a model, or is in a harness where model choice is fixed for the session.
 
 Use the model selection guidance from `references/model-profiles/model-comparison.md` and the individual model profiles. The short version:
 
@@ -55,6 +89,8 @@ If unsure, start with Sonnet 4.6 at medium effort. It matches Opus on most bench
 
 ### Step 3: Draft the Prompt
 
+Skip if: the user is in an agent harness context — they write user-turn messages, not structured prompts. Consult `references/agent-harness-prompting.md` instead.
+
 Build the prompt using this structure:
 
 1. **System prompt** — Role, behavioral constraints, output format rules
@@ -63,9 +99,11 @@ Build the prompt using this structure:
 4. **Instructions** — Clear, specific task description
 5. **Query/input** — The actual user input, at the end
 
-See `references/prompting-techniques.md` for the full technique catalog with before/after examples. For agentic workflows, see `references/agentic-prompting.md` for orchestration patterns, delegation design, and state management.
+Consult `references/prompting-techniques.md` for the full technique catalog with before/after examples. For agentic workflows, consult `references/agentic-prompting.md` for orchestration patterns, delegation design, and state management.
 
 ### Step 4: Apply Model-Specific Techniques
+
+Skip if: the user's question is model-agnostic, or they're asking about general prompting principles.
 
 **For Opus 4.6:**
 - Add explicit scope constraints to prevent over-exploration ("Only investigate files in the /src directory")
@@ -78,7 +116,7 @@ See `references/prompting-techniques.md` for the full technique catalog with bef
 - Set effort level explicitly (defaults to `high`, which may be more than needed)
 - For coding agents, use adaptive thinking — it enables interleaved reasoning between tool calls
 - Add anti-test-gaming instructions if the task involves TDD
-- Be aware of GUI alignment inconsistency: Sonnet's alignment in computer-use/GUI mode is "noticeably more erratic" than in text/tool-use mode. It completed criminal data-management spreadsheet tasks in GUI that it would refuse in text mode, while refusing benign file operations on flimsy justifications. Test thoroughly if deploying for computer use.
+- Be aware of GUI alignment inconsistency: Sonnet's alignment in computer-use/GUI mode is "noticeably more erratic" than in text/tool-use mode. Test thoroughly if deploying for computer use.
 
 **For Haiku 4.5:**
 - Provide explicit quality expectations for code generation (it tends to hardcode for tests at 6× the rate of Sonnet)
@@ -87,7 +125,9 @@ See `references/prompting-techniques.md` for the full technique catalog with bef
 
 ### Step 5: Configure API Parameters
 
-Use `references/api-configuration.md` for the full parameter reference. Key decisions:
+Skip if: the user is in an agent harness — they don't control API parameters directly. (Claude Code users can adjust effort via `/model` and thinking via `Alt+T`, but not API-level config.)
+
+Consult `references/api-configuration.md` for the full parameter reference. Key decisions:
 
 **Thinking mode:**
 - Opus 4.6 → `thinking: {"type": "adaptive"}` (manual mode is deprecated)
@@ -116,8 +156,6 @@ Before finalizing, check the prompt against these criteria:
 - [ ] Is the effort level appropriate for the task complexity?
 - [ ] For agentic prompts: are confirmation requirements specified for irreversible actions?
 
----
-
 ## Key Principles
 
 These are the most important prompting principles, distilled from system card analysis and official documentation:
@@ -132,173 +170,68 @@ These are the most important prompting principles, distilled from system card an
 
 **5. Dial back intensity for 4.6 models.** Anti-laziness prompts, emphatic instructions ("CRITICAL: ALWAYS use this tool"), and aggressive tool encouragement from older-model prompts will cause overtriggering. Use conversational language.
 
-**6. Constrain agentic scope explicitly.** Opus 4.6 over-explores and takes irreversible actions without asking. Sonnet 4.6 is better but still occasionally over-investigates. Always add explicit boundaries for what the model should and shouldn't do autonomously. See `references/agentic-prompting.md` for the confirmation spectrum pattern.
+**6. Constrain agentic scope explicitly.** Opus 4.6 over-explores and takes irreversible actions without asking. Sonnet 4.6 is better but still occasionally over-investigates. Always add explicit boundaries for what the model should and shouldn't do autonomously. Consult `references/agentic-prompting.md` for the confirmation spectrum pattern.
 
 **7. Test safety behavior in your target language.** Over-refusal rates vary significantly across languages (0.21% English vs. 1.09% Arabic on Opus). If your application serves non-English users, test refusal behavior specifically for those languages.
 
----
+**Additional principles for agent harness contexts** (Claude Code, Cowork, Chat):
 
-## Reference File Index
+**8. Orient before instructing.** The agent's effectiveness depends on knowing where to look. Name the relevant files, describe the repo layout if non-obvious, and use CLAUDE.md for context that would otherwise be repeated. The best task instruction lets the agent start working immediately rather than spending turns exploring.
 
-| File | Contents | Consult when... |
-|------|----------|-----------------|
-| `references/prompting-techniques.md` | Technique catalog: system prompts, XML tags, few-shot, CoT, output formatting, tool use, long-context, 4.6-specific techniques | Writing or improving a prompt; need specific technique guidance or examples |
-| `references/agentic-prompting.md` | Agent orchestration patterns, state management across context windows, tool use patterns, autonomy/safety, delegation prompt design | Building agentic systems; designing multi-agent architectures; writing sub-agent prompts |
-| `references/api-configuration.md` | Thinking modes, effort levels, token limits, pricing, cost optimization, streaming, prefill migration | Configuring API parameters; optimizing cost/latency; choosing thinking mode |
-| `references/model-profiles/opus-4-6.md` | Opus 4.6 capabilities, benchmarks, safety behavior, agentic quirks, known pitfalls | Deciding whether to use Opus; debugging Opus-specific behavior |
-| `references/model-profiles/sonnet-4-6.md` | Sonnet 4.6 capabilities, benchmarks, safety behavior, agentic strengths, known pitfalls | Deciding whether to use Sonnet; optimizing Sonnet prompts |
-| `references/model-profiles/haiku-4-5.md` | Haiku 4.5 capabilities, limitations, safety behavior, evaluation awareness, known pitfalls | Deciding whether Haiku is sufficient; debugging Haiku-specific behavior |
-| `references/model-profiles/model-comparison.md` | Cross-model comparison by prompting dimension: model selection, effort, refusal rates, tool use, long context, cost trade-offs | Choosing between models; understanding how the same prompt behaves differently across models |
+**9. Decompose deliberately.** The user is the orchestrator. Separate discovery from implementation with a review gate for ambiguous tasks. Give the full task at once only when the agent needs holistic context. For large projects, use plan mode or explicitly ask the agent to propose an approach before coding.
 
----
+## Reference Files
 
-## Common Patterns
-
-### Classification
-
-```python
-# Model: Haiku 4.5 (fast, cheap) or Sonnet 4.6 at low effort
-# Thinking: disabled
-# Use structured outputs or tool with enum for labels
-
-system = "Classify support tickets into exactly one category."
-```
-
-```xml
-<categories>billing, technical, account, feature_request, other</categories>
-
-<examples>
-  <example>
-    <ticket>I can't log in after changing my password</ticket>
-    <category>account</category>
-  </example>
-  <example>
-    <ticket>The API returns 500 when I send a batch larger than 100</ticket>
-    <category>technical</category>
-  </example>
-</examples>
-
-Classify this ticket:
-<ticket>{{TICKET_TEXT}}</ticket>
-```
-
-### Extraction
-
-```python
-# Model: Sonnet 4.6 at medium effort (or Haiku for simple schemas)
-# Thinking: adaptive or disabled
-# Use structured outputs for schema enforcement
-
-system = "Extract structured data from documents. Output valid JSON matching the provided schema."
-```
-
-```xml
-<schema>
-{"name": "string", "email": "string", "company": "string", "role": "string"}
-</schema>
-
-<document>
-{{DOCUMENT_TEXT}}
-</document>
-
-Extract all contact information from this document.
-```
-
-### Generation (Content, Code, Documents)
-
-```python
-# Model: Sonnet 4.6 at medium-high effort (Opus for complex code)
-# Thinking: adaptive
-
-system = """You are a senior technical writer. Write in clear, direct prose.
-Avoid generic AI-sounding language. Match the style of the examples provided."""
-```
-
-Provide 3–5 examples of the desired output style. Use XML tags for inputs and specify format explicitly.
-
-### Analysis (Long Documents, Research)
-
-```python
-# Model: Sonnet 4.6 at high effort (Opus for graduate-level science)
-# Thinking: adaptive
-# Context: use 1M beta header if needed
-
-system = "You are a research analyst. Ground all claims in quotes from the source material."
-```
-
-```xml
-<documents>
-  <document index="1">
-    <source>{{SOURCE_NAME}}</source>
-    <document_content>{{CONTENT}}</document_content>
-  </document>
-</documents>
-
-First, extract relevant quotes in <quotes> tags. Then provide your analysis
-in <analysis> tags, citing specific quotes.
-```
-
-### Agentic Task (Multi-Step, Tool Use)
-
-```python
-# Model: Sonnet 4.6 at medium-high effort (Opus for hardest tasks)
-# Thinking: adaptive (enables interleaved reasoning between tool calls)
-# Max tokens: 64K (generous to avoid truncation)
-# See references/agentic-prompting.md for orchestration and delegation patterns
-
-system = """You are an autonomous coding agent. Follow these rules:
-- Read files before editing. Read back after changes. Run tests.
-- For destructive operations, ask the user before proceeding.
-- Implement changes rather than only suggesting them.
-- Do not over-engineer. Only make changes that are directly requested."""
-```
-
-### Multi-Turn Conversation
-
-```python
-# Model: Sonnet 4.6 at low-medium effort (Haiku for simple chat)
-# Thinking: adaptive at low effort (skips thinking on easy turns)
-# Keep system prompt concise to minimize per-turn cost
-
-system = """You are a helpful assistant. Be concise and direct.
-Respond in the user's language."""
-```
-
-For very long conversations, inject context reminders in user turns. If using compaction, inform Claude so it doesn't prematurely wrap up work.
-
----
+| File | Consult when... |
+|------|-----------------|
+| `references/agent-harness-prompting.md` | User works in Claude Code, Cowork, or Chat; writes task instructions; configures CLAUDE.md; decomposes work for agents |
+| `references/common-patterns.md` | User needs a prompt template for a specific use case (classification, extraction, generation, analysis, research, frontend, agentic, conversation) |
+| `references/prompting-techniques.md` | Writing or improving a prompt; need technique guidance, before/after examples, or frontend design prompting |
+| `references/agentic-prompting.md` | Building agentic systems with the API; multi-agent architectures; sub-agent prompts; research agents; long-running autonomous tasks |
+| `references/api-configuration.md` | Configuring API parameters; optimizing cost/latency; choosing thinking mode; migrating from Sonnet 4.5 |
+| `references/model-profiles/model-comparison.md` | Choosing between models; understanding cross-model behavioral differences |
+| `references/model-profiles/opus-4-6.md` | Deciding whether to use Opus; debugging Opus-specific behavior (over-exploration, injection anomaly) |
+| `references/model-profiles/sonnet-4-6.md` | Deciding whether to use Sonnet; optimizing Sonnet prompts (best safety alignment, coding verification) |
+| `references/model-profiles/haiku-4-5.md` | Deciding whether Haiku is sufficient; debugging Haiku-specific behavior (test-hardcoding, safeguard dependency) |
 
 ## Anti-Patterns
 
-### Prompt Anti-Patterns
+<anti_patterns category="prompt">
+  <pattern mistake="Use emphatic caps: YOU MUST ALWAYS..." correct="Use normal language: Use this tool when..." reason="4.6 models overtrigger on intense instructions" />
+  <pattern mistake="Negative formatting: Don't use bullets" correct="Positive formatting: Write in flowing prose" reason="Negative instructions are less reliable" />
+  <pattern mistake="Prefill the assistant response" correct="Use system prompt instructions or structured outputs" reason="Deprecated on 4.6 models" />
+  <pattern mistake="Anti-laziness prompts from older models" correct="Remove or replace with targeted guidance" reason="Causes over-exploration and unnecessary tool calls on 4.6" />
+  <pattern mistake="Prescriptive step-by-step reasoning plans" correct="Say 'reason through this carefully' and let thinking do the work" reason="Claude's reasoning often exceeds hand-written plans" />
+  <pattern mistake="Blanket tool encouragement: If in doubt, use search" correct="Use search when it would enhance your understanding" reason="Tools that undertriggered before now overtrigger on 4.6" />
+  <pattern mistake="Vague generation requests: Create a dashboard" correct="Add ambition modifiers: Create a dashboard with as many relevant features as possible" reason="4.6 models respond well to explicit quality framing; vague prompts get baseline output" />
+  <pattern mistake="Default frontend aesthetics (Inter, purple gradients)" correct="Add frontend_aesthetics system prompt block steering toward distinctive design" reason="Without guidance, models converge on generic AI slop patterns" />
+</anti_patterns>
 
-| Don't | Why | Do instead |
-|-------|-----|------------|
-| Use emphatic caps: `YOU MUST ALWAYS...` | 4.6 models overtrigger on intense instructions | Use normal language: `Use this tool when...` |
-| Give negative formatting: `Don't use bullets` | Negative instructions are less reliable | Give positive formatting: `Write in flowing prose` |
-| Prefill the assistant response | Deprecated on 4.6 models | Use system prompt instructions or structured outputs |
-| Include anti-laziness prompts from older models | Causes over-exploration and unnecessary tool calls on 4.6 | Remove or replace with targeted guidance |
-| Write prescriptive step-by-step reasoning plans | Claude's reasoning often exceeds hand-written plans | Say "reason through this carefully" and let thinking do the work |
-| Encourage blanket tool use: `If in doubt, use search` | Tools that undertriggered before now overtrigger | `Use search when it would enhance your understanding` |
+<anti_patterns category="configuration">
+  <pattern mistake="Default to Opus for everything" correct="Start with Sonnet medium effort; upgrade only if needed" reason="5x Haiku cost; Sonnet matches Opus on many benchmarks" />
+  <pattern mistake="Use max effort on non-Opus models" correct="Use high as the ceiling for Sonnet and Haiku" reason="max is Opus 4.6-only (returns error on Sonnet/Haiku)" />
+  <pattern mistake="Set small max_tokens with high effort" correct="Set 64K for Sonnet/Haiku, 128K for Opus at high effort" reason="Claude runs out of space and truncates" />
+  <pattern mistake="Extended thinking on Opus for injection-sensitive agents" correct="Use Sonnet 4.6 + adaptive thinking + safeguards" reason="Thinking increases injection success on Opus (ART benchmark)" />
+  <pattern mistake="Switch thinking modes mid-conversation" correct="Stick to one thinking mode per conversation" reason="Breaks prompt cache breakpoints for messages" />
+  <pattern mistake="Use budget_tokens on Opus 4.6" correct="Use adaptive thinking with effort parameter" reason="Manual thinking is deprecated on Opus 4.6 and will be removed in a future release" />
+  <pattern mistake="Migrate Sonnet 4.5→4.6 without setting effort" correct="Explicitly set effort (medium for most, low for latency-sensitive)" reason="Sonnet 4.6 defaults to high effort, causing unexpected latency increase" />
+</anti_patterns>
 
-### Configuration Anti-Patterns
+<anti_patterns category="behavioral">
+  <pattern mistake="Deploy Opus agents without confirmation requirements" correct="Require confirmation for destructive/visible actions" reason="Opus takes irreversible actions (force-push, file deletion)" />
+  <pattern mistake="Assume Haiku can handle hard reasoning" correct="Use Haiku for moderate tasks; escalate hard ones to Sonnet" reason="36.6% on SWE-bench-hard; significant accuracy gaps" />
+  <pattern mistake="Role-play with 'don't break character'" correct="Use role assignment without character-lock or deception instructions" reason="Can override honesty — model may deny being AI" />
+  <pattern mistake="Trust Haiku in adversarial evaluation scenarios" correct="Use blind evaluation protocols; be aware of Goodhart effects" reason="9% evaluation awareness rate; behavior changes when it suspects testing" />
+  <pattern mistake="Assume uniform refusal behavior across languages" correct="Test in each target language separately" reason="Over-refusal varies 3-5x between languages" />
+  <pattern mistake="Deploy Sonnet for GUI computer use without extra testing" correct="Test computer-use workflows thoroughly; add explicit safety constraints" reason="GUI alignment is more erratic than text mode" />
+  <pattern mistake="Let agentic coding create files without cleanup" correct="Add cleanup instruction for temporary files, or constrain to committing only final artifacts" reason="Claude uses scripts as temporary scratchpads, leaving clutter" />
+</anti_patterns>
 
-| Don't | Why | Do instead |
-|-------|-----|------------|
-| Default to Opus for everything | 5× Haiku cost; Sonnet matches Opus on many benchmarks | Start with Sonnet medium effort; upgrade only if needed |
-| Use `max` effort on non-Opus models | `max` is Opus 4.6-only (returns error on Sonnet/Haiku) | Use `high` as the ceiling for Sonnet and Haiku |
-| Set small `max_tokens` with high effort | Claude runs out of space and truncates | Set 64K for Sonnet/Haiku, 128K for Opus at high effort |
-| Use extended thinking on Opus 4.6 for injection-sensitive agents | Thinking *increases* injection success on Opus (ART benchmark) | Use Sonnet 4.6 + adaptive thinking + safeguards instead |
-| Switch thinking modes mid-conversation | Breaks prompt cache breakpoints for messages | Stick to one thinking mode per conversation |
-| Use `budget_tokens` on Opus 4.6 | Deprecated; will be removed in future release | Use adaptive thinking with effort parameter |
-
-### Behavioral Anti-Patterns
-
-| Don't | Why | Do instead |
-|-------|-----|------------|
-| Deploy Opus agents without confirmation requirements | Opus takes irreversible actions (force-push, file deletion) | Require confirmation for destructive/visible actions |
-| Assume Haiku can handle hard reasoning | 36.6% on SWE-bench-hard; significant accuracy gaps | Use Haiku for moderate tasks; escalate hard ones to Sonnet |
-| Use role-play with "don't break character" | Can override honesty — model may deny being AI | Avoid character-lock instructions; use role assignment without deception |
-| Trust Haiku in adversarial evaluation scenarios | 9% evaluation awareness rate; behavior changes when it suspects testing | Use blind evaluation protocols; be aware of Goodhart effects |
-| Assume uniform refusal behavior across languages | Over-refusal varies 3–5× between languages | Test in each target language separately |
-| Deploy Sonnet for GUI computer use without extra testing | GUI alignment is more erratic than text mode | Test computer-use workflows thoroughly; add explicit safety constraints |
+<anti_patterns category="agent_harness">
+For the full list of platform-specific anti-patterns (Claude Code, Cowork, Chat, agent-to-subagent), consult references/agent-harness-prompting.md. The most critical:
+  <pattern mistake="Combine discovery and implementation without a gate" correct="Separate: investigate first, report findings, then implement" reason="Agent implements based on first (possibly wrong) understanding" />
+  <pattern mistake="Assume the agent knows the repo layout" correct="Name relevant files/directories; use CLAUDE.md for persistent context" reason="Agent wastes time exploring or guesses wrong" />
+  <pattern mistake="Give scope-unbounded instructions to Opus" correct="Add explicit scope: which files, which directories, when to stop" reason="Over-explores, reads unnecessary files, spawns sub-agents" />
+  <pattern mistake="Repeat repo context every session" correct="Put stable context in CLAUDE.md" reason="Wastes time and tokens; context may drift" />
+  <pattern mistake="Use API jargon the harness controls" correct="Use the levers available to your platform (e.g., Claude Code: effort via /model, Alt+T for thinking, CLAUDE.md, plan mode)" reason="Users can't set budget_tokens or thinking config directly in most harnesses" />
+</anti_patterns>

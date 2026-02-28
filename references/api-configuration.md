@@ -2,7 +2,6 @@
 
 Technical reference for the API parameters that affect prompt effectiveness. Covers thinking modes, effort levels, token limits, and cost optimization.
 
----
 
 ## Quick Reference
 
@@ -19,7 +18,6 @@ Technical reference for the API parameters that affect prompt effectiveness. Cov
 | **Default effort** | high | high | N/A |
 | **Reliable knowledge cutoff** | May 2025 | Aug 2025 | Feb 2025 |
 
----
 
 ## Thinking Configuration
 
@@ -90,7 +88,6 @@ Extended thinking has opposite effects on prompt injection across models. From s
 
 For agentic deployments where injection is a concern, Sonnet 4.6 with adaptive thinking + safeguards is the most robust configuration.
 
----
 
 ## Effort Parameter
 
@@ -128,7 +125,6 @@ response = client.messages.create(
 
 Lower effort produces fewer, more combined tool calls with terse confirmation messages. Higher effort produces more tool calls with explanations and detailed summaries. If Claude is making too many speculative tool calls, lower the effort before rewriting prompts.
 
----
 
 ## Context Windows and Token Limits
 
@@ -159,7 +155,6 @@ Opus 4.6 supports 128K output tokens; Sonnet and Haiku support 64K. Set `max_tok
 
 Thinking tokens count against `max_tokens`. With adaptive thinking at high effort, Claude may think extensively and exhaust the budget. If this happens, increase `max_tokens` or lower effort. Use `max_tokens` as a hard ceiling on total output cost.
 
----
 
 ## Cost Optimization Strategies
 
@@ -187,7 +182,6 @@ Remove anti-laziness prompts inherited from older models (`ALWAYS investigate th
 
 Batch API offers significant discounts for workloads that can tolerate asynchronous processing.
 
----
 
 ## Prefill Deprecation (4.6 Models)
 
@@ -201,7 +195,6 @@ Prefilled responses on the last assistant turn are no longer supported on Claude
 | Continuing partial output | User message: "Your previous response ended with `[text]`. Continue from there." |
 | Context hydration | Inject reminders in user turns, or hydrate via tools |
 
----
 
 ## Streaming
 
@@ -227,3 +220,68 @@ with client.messages.stream(
 Claude 4 models return a *summary* of thinking, not the full chain of thought. You are billed for the full thinking tokens generated internally, not the summary tokens visible in the response. The billed output token count will not match the visible count.
 
 The first few lines of thinking output are more verbose and provide the most useful reasoning for prompt engineering purposes.
+
+
+## Migrating Sonnet 4.5 → Sonnet 4.6
+
+Sonnet 4.6 defaults to effort level `high`, whereas Sonnet 4.5 had no effort parameter. Without adjustment, you may see higher latency. Set effort explicitly during migration.
+
+### If You're Not Using Extended Thinking
+
+Continue without it. Set effort to `low` for similar-or-better performance relative to Sonnet 4.5 with no thinking:
+
+```python
+client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=8192,
+    thinking={"type": "disabled"},
+    output_config={"effort": "low"},
+    messages=[{"role": "user", "content": "..."}],
+)
+```
+
+### If You're Using Extended Thinking
+
+Extended thinking continues to be supported with no changes required. Keep a thinking budget around 16K tokens — most tasks use less, but this provides headroom without runaway usage.
+
+**For coding use cases** (agentic coding, tool-heavy workflows): start with `medium` effort. Lower to `low` if latency is too high, or increase to `high` if you need more intelligence.
+
+```python
+client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=16384,
+    thinking={"type": "enabled", "budget_tokens": 16384},
+    output_config={"effort": "medium"},
+    messages=[{"role": "user", "content": "..."}],
+)
+```
+
+**For chat and non-coding use cases** (content generation, search, classification): start with `low` effort with extended thinking. Increase to `medium` if you need more depth.
+
+```python
+client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=8192,
+    thinking={"type": "enabled", "budget_tokens": 16384},
+    output_config={"effort": "low"},
+    messages=[{"role": "user", "content": "..."}],
+)
+```
+
+### When to Switch to Adaptive Thinking
+
+The paths above use `budget_tokens` for predictable costs. Consider adaptive thinking instead for:
+
+- **Autonomous multi-step agents** — coding agents, data pipelines, bug-finding where the model runs independently across many steps. Adaptive lets it calibrate reasoning per step.
+- **Computer use agents** — Sonnet 4.6 achieved best-in-class accuracy on computer use evaluations using adaptive mode.
+- **Bimodal workloads** — a mix of easy and hard tasks where adaptive skips thinking on simple queries and reasons deeply on complex ones.
+
+```python
+client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=64000,
+    thinking={"type": "adaptive"},
+    output_config={"effort": "high"},  # evaluate medium vs. high for your workload
+    messages=[{"role": "user", "content": "..."}],
+)
+```
